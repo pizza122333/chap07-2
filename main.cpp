@@ -1,0 +1,50 @@
+#include <opencv2/opencv.hpp>
+#include <iostream>
+
+using namespace cv;
+using namespace std;
+
+int main(void)
+{
+    // 1. 이미지 로드
+    Mat src = imread("rose.bmp", IMREAD_GRAYSCALE);
+    if (src.empty()) {
+        cerr << "Image load failed!" << endl;
+        return -1;
+    }
+
+    // [조건 1] 슬라이드에 제시된 5x5 가우시안 마스크 데이터 정의
+    // 모든 원소에 1.0f / 273.0f 을 곱해줍니다.
+    float scale = 1.0f / 273.0f;
+    float data[] = {
+        1 * scale,  4 * scale,  7 * scale,  4 * scale,  1 * scale,
+        4 * scale, 16 * scale, 26 * scale, 16 * scale,  4 * scale,
+        7 * scale, 26 * scale, 41 * scale, 26 * scale,  7 * scale,
+        4 * scale, 16 * scale, 26 * scale, 16 * scale,  4 * scale,
+        1 * scale,  4 * scale,  7 * scale,  4 * scale,  1 * scale
+    };
+    Mat custom_gaussian(5, 5, CV_32FC1, data);
+
+    Mat dst_filter2D;
+    Mat dst_opencv;
+
+    // 2. filter2D를 이용한 가우시안 필터 구현 (delta = 0)
+    filter2D(src, dst_filter2D, -1, custom_gaussian, Point(-1, -1), 0);
+
+    // [조건 2] GaussianBlur 내장 함수 호출 (ksize = 5x5, sigma = 0으로 주어 자동 계산)
+    GaussianBlur(src, dst_opencv, Size(5, 5), 0);
+
+    // 결과 영상에 구분을 위한 텍스트 추가
+    putText(dst_filter2D, "custom filter2D (5x5)", Point(10, 30),
+        FONT_HERSHEY_SIMPLEX, 0.8, Scalar(255), 1, LINE_AA);
+    putText(dst_opencv, "OpenCV GaussianBlur (5x5)", Point(10, 30),
+        FONT_HERSHEY_SIMPLEX, 0.8, Scalar(255), 1, LINE_AA);
+
+    // 3. 결과 출력 및 비교
+    imshow("src", src);
+    imshow("dst_filter2D", dst_filter2D);
+    imshow("dst_opencv", dst_opencv);
+
+    waitKey(0);
+    return 0;
+}
