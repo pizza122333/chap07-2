@@ -1,0 +1,44 @@
+#include <opencv2/opencv.hpp>
+#include <iostream>
+
+using namespace cv;
+using namespace std;
+
+int main(void)
+{
+    // 1. 이미지 로드
+    Mat src = imread("rose.bmp", IMREAD_GRAYSCALE);
+    if (src.empty()) {
+        cerr << "Image load failed!" << endl;
+        return -1;
+    }
+    imshow("src", src);
+
+    Mat dst;
+
+    // 3부터 7까지 홀수 크기로 반복
+    for (int ksize = 3; ksize <= 7; ksize += 2) {
+
+        // [핵심] 현재 ksize 크기에 맞는 평균값 마스크 동적 생성
+        // 예: 3x3 필터라면 모든 원소를 1.0f / (3*3) = 1/9로 초기화합니다.
+        float sample_value = 1.0f / (float)(ksize * ksize);
+
+        // Scalar(sample_value)를 사용하면 행렬의 모든 원소가 해당 값으로 채워집니다.
+        Mat mean_kernel(ksize, ksize, CV_32FC1, Scalar(sample_value));
+
+        // 2. filter2D 함수를 이용하여 평균값 필터 구현
+        // 마스크의 총합이 1이므로 마지막 매개변수(delta)는 0으로 설정합니다.
+        filter2D(src, dst, -1, mean_kernel, Point(-1, -1), 0);
+
+        // 결과 영상에 안내 글자 작성
+        String desc = format("filter2D Mean: %dx%d", ksize, ksize);
+        putText(dst, desc, Point(10, 30), FONT_HERSHEY_SIMPLEX, 1.0,
+            Scalar(255), 1, LINE_AA);
+
+        // 결과 출력
+        imshow("dst", dst);
+        waitKey();
+    }
+
+    return 0;
+}
