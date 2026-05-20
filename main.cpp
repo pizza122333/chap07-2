@@ -1,0 +1,52 @@
+#include <opencv2/opencv.hpp>
+#include <iostream>
+
+using namespace cv;
+using namespace std;
+
+int main(void)
+{
+    // 1. 영상 로드
+    Mat src = imread("rose.bmp", IMREAD_GRAYSCALE);
+    if (src.empty()) {
+        cerr << "Image load failed!" << endl;
+        return -1;
+    }
+    imshow("src", src);
+
+    Mat dst;
+
+    // OpenCV 시간 측정 클래스 선언
+    TickMeter tm;
+
+    // 표준편차(sigma) 1부터 5까지 반복
+    for (int sigma = 1; sigma <= 5; sigma++) {
+
+        // 이전 루프의 스톱워치 기록 초기화
+        tm.reset();
+
+        // 시간 측정 시작
+        tm.start();
+
+        // 가우시안 블러 수행 (Size()를 비워두어 sigma에 맞게 커널 크기 자동 지정)
+        GaussianBlur(src, dst, Size(), (double)sigma);
+
+        // 시간 측정 종료
+        tm.stop();
+
+        // 콘솔창에 결과 출력 (밀리초 단위)
+        cout << "Gaussian Blur [sigma = " << sigma << "] Execution Time: "
+            << tm.getTimeMilli() << " ms" << endl;
+
+        // 결과 영상에 안내 글자 작성 (현재 시그마 값과 측정된 시간 표시)
+        String desc = format("Gaussian: sigma = %d (%.2f ms)", sigma, tm.getTimeMilli());
+        putText(dst, desc, Point(10, 30), FONT_HERSHEY_SIMPLEX, 0.8,
+            Scalar(255), 1, LINE_AA);
+
+        // 결과 출력
+        imshow("dst", dst);
+        waitKey(0); // 사용자가 키를 누르면 다음 시그마 단계로 진행
+    }
+
+    return 0;
+}
